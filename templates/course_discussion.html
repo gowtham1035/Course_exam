@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Discussion</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/script.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Course Discussion</h1>
+        <div class="threads">
+            <h2>Threads</h2>
+            <ul id="threads-list">
+                <!-- Threads will be dynamically added here -->
+            </ul>
+        </div>
+        <div class="new-thread">
+            <h2>Create New Thread</h2>
+            <form id="create-thread-form">
+                <label for="title">Title:</label><br>
+                <input type="text" id="title" name="title"><br>
+                <label for="content">Content:</label><br>
+                <textarea id="content" name="content"></textarea><br>
+                <label for="user">User:</label><br>
+                <input type="text" id="user" name="user"><br>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
