@@ -9,7 +9,7 @@ $(document).ready(function() {
             data.forEach(function(course) {
                 // Check if course fields are defined before appending
                 if (course[1] && course[2]) {
-                    $('#courses-list').append(`<li>${course[1]} - ${course[2]} <button class="drop-btn" data-id="${course[0]}">Drop</button></li>`);
+                    $('#courses-list').append(`<li>${course[1]} - ${course[2]}</li>`);
                 }
             });
         });
@@ -18,7 +18,7 @@ $(document).ready(function() {
     // Fetch courses on page load
     fetchCourses();
 
-    // Event listener for creating a new course
+    // Event listener for creating a new course (only for the teacher)
     $('#create-course-form').submit(function(event) {
         event.preventDefault();
         var formData = $(this).serialize();
@@ -29,22 +29,8 @@ $(document).ready(function() {
         });
     });
 
-    // Event listener for dropping a course
-    $(document).on('click', '.drop-btn', function() {
-        var courseId = $(this).data('id');
-        $.post(`/drop_course/${courseId}`, function() {
-            // Fetch courses again after dropping a course
-            fetchCourses();
-        });
-    });
-
-    // Event listener for add course button
+    // Event listener for add course button (only visible to the teacher)
     $('#add-course-btn').click(function() {
         $('#create-course-form').show();
-    });
-
-    // Event listener for delete course button
-    $('#delete-course-btn').click(function() {
-        $('.drop-btn').toggle();
     });
 });
