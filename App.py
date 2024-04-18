@@ -1,6 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import psycopg2
-from flask import jsonify
 
 app = Flask(__name__)
 
@@ -15,10 +14,6 @@ DB_PORT = "5432"
 # Function to establish database connection
 def connect_to_db():
     return psycopg2.connect(
-def create_table():
-    # Connect to the database
-    conn = psycopg2.connect(
-
         dbname=DB_NAME,
         user=DB_USER,
         password=DB_PASSWORD,
@@ -26,6 +21,29 @@ def create_table():
         port=DB_PORT
     )
 
+def authenticate_user(username, password):
+    conn = connect_to_db()
+    cur = conn.cursor()
+
+    # Check if the user is a student
+    cur.execute("SELECT * FROM studentDB WHERE username = %s AND password = %s", (username, password))
+    student = cur.fetchone()
+
+    if student:
+        conn.close()
+        return 'student'
+    
+    # Check if the user is a teacher
+    cur.execute("SELECT * FROM teacherDB WHERE username = %s AND password = %s", (username, password))
+    teacher = cur.fetchone()
+
+    if teacher:
+        conn.close()
+        return 'teacher'
+
+    # If no user found, return False
+    conn.close()
+    return False
 
 # Function to create the courses table if not exists
 def create_courses_table():
@@ -123,103 +141,18 @@ def enroll():
     conn.close()
     response = {'status': 'success', 'message': f'Enrolled in {course_name}'}
     return jsonify(response)
-    cur = conn.cursor()
 
-    # Create the student table if it doesn't exist
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS studentDB (
-            id SERIAL PRIMARY KEY,
-            username VARCHAR(50) UNIQUE NOT NULL,
-            password VARCHAR(100) NOT NULL
-        );
-    """)
-
-    # Create the teacher table if it doesn't exist
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS teacherDB (
-            id SERIAL PRIMARY KEY,
-            username VARCHAR(50) UNIQUE NOT NULL,
-            password VARCHAR(100) NOT NULL
-        );
-    """)
-
-    conn.commit()
-
-# def add_user(username, password, role):
-#     conn = psycopg2.connect(
-#         dbname=DB_NAME,
-#         user=DB_USER,
-#         password=DB_PASSWORD,
-#         host=DB_HOST,
-#         port=DB_PORT
-#     )
-#     cur = conn.cursor()
-
-#     if role == 'student':
-#         cur.execute("INSERT INTO studentDB (username, password) VALUES (%s, %s)", (username, password))
-#     elif role == 'teacher':
-#         cur.execute("INSERT INTO teacherDB (username, password) VALUES (%s, %s)", (username, password))
-
-#     conn.commit()
-#     conn.close()
-
-def authenticate_user(username, password):
-    conn = psycopg2.connect(
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        host=DB_HOST,
-        port=DB_PORT
-    )
-    cur = conn.cursor()
-
-    cur.execute("SELECT * FROM studentDB WHERE username = %s AND password = %s", (username, password))
-    student = cur.fetchone()
-
-    if student:
-        return True, 'student'
-    
-    cur.execute("SELECT * FROM teacherDB WHERE username = %s AND password = %s", (username, password))
-    teacher = cur.fetchone()
-
-    if teacher:
-        return True, 'teacher'
-
-    return False, None
-
-create_table()
-
-# # Add mock users to the database
-# add_user("student123", "password123", "student")
-# add_user("teacher456", "password456", "teacher")
-
-@app.route('/')
-def login():
-    return render_template('login.html')
-
+# Route to authenticate user and render dashboard
 @app.route('/dashboard', methods=['POST'])
 def dashboard():
     username = request.form['username']
     password = request.form['password']
-    
-    authenticated, role = authenticate_user(username, password)
-    
+    authenticated = authenticate_user(username, password)
     if authenticated:
-        if role == 'student':
-            return redirect(url_for('student_dashboard'))
-        elif role == 'teacher':
-            return redirect(url_for('teacher_dashboard'))
+        return redirect(url_for('student_dashboard' if authenticated == 'student' else 'teacher_dashboard'))
     else:
         error = 'Invalid username or password. Please try again.'
         return render_template('login.html', error=error)
-
-@app.route('/student/dashboard')
-def student_dashboard():
-    return render_template('student.html')
-
-@app.route('/teacher/dashboard')
-def teacher_dashboard():
-    return render_template('teacher.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
